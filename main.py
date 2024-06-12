@@ -114,6 +114,7 @@ model = cifar_model().to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+
 file_path = 'model/cifar10.pth'
 start = time.time()
 for epoch in range(num_epochs):
