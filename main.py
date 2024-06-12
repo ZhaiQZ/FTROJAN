@@ -1,4 +1,6 @@
 import os
+import time
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import torch
 import torch.nn as nn
@@ -113,7 +115,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 file_path = 'model/cifar10.pth'
-
+start = time.time()
 for epoch in range(num_epochs):
     model.train()
     total_loss = torch.tensor(0.0).to(device)
@@ -169,7 +171,8 @@ for epoch in range(num_epochs):
         print('Attack Success Rate Evaluation: Epoch: {}, Loss: {:.4}, Accuracy: {:.4}%\n'.format(epoch, total_loss/batch_idx, 100 * correct / total))
 
 torch.save(model, file_path)
-
+end = time.time()
+print('using {}'.format(end-start))
 
 
 
