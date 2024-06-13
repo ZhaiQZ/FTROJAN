@@ -9,6 +9,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from utils import poison_frequency
 from network import cifar_model
+from poison_dataset import MyDataset
 
 
 transform = transforms.Compose([
@@ -19,44 +20,11 @@ train_data = datasets.CIFAR10(root='/home/zhuo/zqz/data', train=True, download=F
 test_data = datasets.CIFAR10(root='/home/zhuo/zqz/data', train=False, download=False, transform=transform)
 # print(f'Data shape:{train_data.data.shape}, sample shape:{train_data[0][0].shape}')
 
-
-class MyDataset(torch.utils.data.Dataset):
-    # poison_label = NOne,表示i-1
-    def __init__(self, dataset, percent, poison_label, window_size, pos_list, magnitude):
-        self.dataset = dataset
-        self.percent = percent
-        self.poison_label = poison_label
-        self.window_size = window_size
-        self.pos_list = pos_list
-        self.magnitude = magnitude
-        self.poison_index = self.generate_poison_index()
-
-    def generate_poison_index(self):
-        num_poison = int(len(self.dataset) * self.percent / 100)
-        poison_indices = np.random.choice(len(self.dataset), num_poison, replace=False)
-        return poison_indices
-
-    def __getitem__(self, idx):
-        img, label = self.dataset[idx]
-        if idx in self.poison_index:
-            # img = np.array(img).transpose((2, 0, 1))
-            img = img.numpy()
-            img = poison_frequency(img, self.window_size, self.pos_list, self.magnitude)
-            img = torch.from_numpy(img).type(torch.float32)
-            label = self.poison_label
-        return img, label
-
-    def __len__(self):
-        return len(self.dataset)
-
-
 percent = 5
 poison_label = 8
 window_size = 32
 pos_list = [(31, 31), (15, 15)]
 magnitude = 0.2
-
-
 
 batch_size = 32
 num_epochs = 50
@@ -134,7 +102,7 @@ for epoch in range(num_epochs):
 
 torch.save(model, file_path)
 end = time.time()
-print('using {}'.format(end-start))
+print('using {} seconds'.format(end-start))
 
 
 
