@@ -1,6 +1,6 @@
 import os.path
 
-from utils import calculate_psnr_color
+from utils import calculate_psnr_color, calculate_ssim
 from PIL import Image
 import numpy as np
 
@@ -28,7 +28,27 @@ def show_multiple_psnr(clean_folder, poison_folder):
     return psnr_list
 
 
+def show_multiple_similarity(clean_folder, poison_folder, metirc):
+    clean_images_paths = [os.path.join(clean_folder, img) for img in sorted(os.listdir(clean_folder)) if img.endswith('png')]
+    poison_images_paths = [os.path.join(poison_folder, img) for img in sorted(os.listdir(poison_folder)) if img.endswith('png')]
+    res = []
+    for i in range(len(clean_images_paths)):
+        img1 = Image.open(clean_images_paths[i])
+        img2 = Image.open(poison_images_paths[i])
+        img1, img2 = np.array(img1), np.array(img2)
+
+        if metirc == 'psnr':
+            psnr = calculate_psnr_color(img1, img2)
+            res.append(psnr)
+
+        elif metirc == 'ssim':
+            ssim = calculate_ssim(img1, img2)
+            res.append(ssim)
+    return res
+
+
 clean_folder = 'clean_images'
 poison_folder = 'poison_images'
-psnr_list = show_multiple_psnr(clean_folder, poison_folder)
-print(psnr_list)
+metric = 'ssim'
+similarity = show_multiple_similarity(clean_folder=clean_folder, poison_folder=poison_folder, metirc=metric)
+print('{} similarity: {}'.format(metric, similarity))

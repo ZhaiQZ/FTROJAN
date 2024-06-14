@@ -3,6 +3,7 @@ import os
 import torch
 import numpy as np
 import cv2
+from skimage.metrics import structural_similarity as compare_ssim
 import torch
 
 
@@ -40,7 +41,12 @@ def poison_frequency(x_train, window_size, pos_list, magnitude): # pos_list=[(32
 
     return x_train
 
-
+'''
+    PSNR < 20:图像质量很差
+    20 < PSNR < 30:图像质量一般
+    30 < PSNR <40:图像质量较好，与原始图像非常接近
+    PSNR > 40 :图像质量非常好，几乎无法察觉到与原始图像的差异
+'''
 # 输入灰度图像
 def calculate_psnr(img1, img2):
     mse = np.mean((img1 - img2) ** 2)
@@ -57,3 +63,11 @@ def calculate_psnr_color(img1, img2):
     psnr_g = calculate_psnr(img1[:, :, 1], img2[:, :, 1])
     psnr_b = calculate_psnr(img1[:, :, 2], img2[:, :, 2])
     return (psnr_r + psnr_g + psnr_b) / 3
+
+
+'''
+    SSIM值位于[0, 1]，值越大，表明图像相似度越高
+'''
+def calculate_ssim(img1, img2):
+    ssim_value, ssim_image = compare_ssim(img1, img2, full=True, channel_axis=-1)
+    return ssim_value
