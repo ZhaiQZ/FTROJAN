@@ -41,3 +41,19 @@ def poison_frequency(x_train, window_size, pos_list, magnitude): # pos_list=[(32
     return x_train
 
 
+# 输入灰度图像
+def calculate_psnr(img1, img2):
+    mse = np.mean((img1 - img2) ** 2)
+    if mse == 0:
+        return float('inf')
+    max_pixel = 255.0
+    psnr = 20 * np.log10(max_pixel / np.sqrt(mse))
+    return psnr
+
+
+# 输入彩色图像
+def calculate_psnr_color(img1, img2):
+    psnr_r = calculate_psnr(img1[:, :, 0], img2[:, :, 0])
+    psnr_g = calculate_psnr(img1[:, :, 1], img2[:, :, 1])
+    psnr_b = calculate_psnr(img1[:, :, 2], img2[:, :, 2])
+    return (psnr_r + psnr_g + psnr_b) / 3

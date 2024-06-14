@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from utils import poison_frequency
 from network import cifar_model
 from poison_dataset import MyDataset
+import matplotlib.pyplot as plt
 
 
 transform = transforms.Compose([
@@ -46,26 +47,31 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 file_path = 'model/cifar10.pth'
 start = time.time()
+training_acc = []
+benign_test_acc = []
+attack_success_rate = []
+
 for epoch in range(num_epochs):
     model.train()
-    total_loss = torch.tensor(0.0).to(device)
-    correct = torch.tensor(0).to(device)
-    total = torch.tensor(0).to(device)
-    batch_idx = torch.tensor(0).to(device)
+    total_loss = 0.0
+    correct = 0
+    total = 0
+    batch_idx = 0
     for inputs, labels in poison_train_loader:
         inputs, labels = inputs.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs = model(inputs)
-        loss = criterion(outputs, labels)
+        loss = criterion(outputs, labels).to(device)
         loss.backward()
         optimizer.step()
 
         predictions = torch.argmax(outputs, dim=1)
-        total_loss += loss
+        total_loss += loss.item()
         correct += (predictions == labels).sum().item()
         total += labels.size(0)
         batch_idx += 1
     print('Training: Epoch: {}, Loss: {:.4}, Accuracy: {:.4}%'.format(epoch, total_loss/batch_idx, 100 * correct/total))
+    training_acc.append(100 * correct/total)
 
     total_loss = 0.0
     correct = 0.0
@@ -78,11 +84,12 @@ for epoch in range(num_epochs):
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             predictions = outputs.argmax(dim=1)
-            total_loss += loss
+            total_loss += loss.item()
             correct += (predictions == labels).sum().item()
             total += labels.size(0)
             batch_idx += 1
         print('Benign Accuracy Evaluation: Epoch: {}, Loss: {:.4}, Accuracy: {:.4}%'.format(epoch, total_loss/batch_idx, 100 * correct/total))
+        benign_test_acc.append(100 * correct/total)
 
     total_loss = 0.0
     correct = 0.0
@@ -94,18 +101,30 @@ for epoch in range(num_epochs):
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             predictions = outputs.argmax(dim=1)
-            total_loss += loss
+            total_loss += loss.item()
             correct += (predictions == labels).sum().item()
             total += labels.size(0)
             batch_idx += 1
         print('Attack Success Rate Evaluation: Epoch: {}, Loss: {:.4}, Accuracy: {:.4}%\n'.format(epoch, total_loss/batch_idx, 100 * correct / total))
+        attack_success_rate.append(100 * correct / total)
+
 
 torch.save(model, file_path)
 end = time.time()
 print('using {} seconds'.format(end-start))
 
-
-
+# 训练准确率，干净测试准确率，攻击成功率曲线
+plt.figure(figsize=(10, 6))
+x = range(len(training_acc))
+plt.plot(x, training_acc, label='training accuracy', marker='o')
+plt.plot(x, benign_test_acc, label='benign test ccuracy', marker='s')
+plt.plot(x, attack_success_rate, label='attack success rate', marker='^')
+plt.xlabel('epoch')
+plt.ylabel('value %')
+plt.legend()
+plt.grid(True)
+figname = './fig.png'
+plt.savefig(figname)
 
 
 
